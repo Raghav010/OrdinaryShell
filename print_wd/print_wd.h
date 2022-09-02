@@ -5,4 +5,4 @@
 #include <unistd.h>
 
 //prints the current working directory
-void wd();
+int wd();

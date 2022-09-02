@@ -10,8 +10,9 @@
 #include <sys/types.h>
 #include <pwd.h>
 #include "../err/errors.h"
+#include "../gvars.h"
 
 extern int homedirLen;
 
 //prompt for the shell
-void shPrompt();
+int shPrompt();
