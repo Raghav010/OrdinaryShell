@@ -19,9 +19,14 @@ all: shell
 ./obj/cdir.o: ./change_dir/cdir.c ./change_dir/cdir.h
 	gcc -c ./change_dir/cdir.c -o ./obj/cdir.o -g
 
+./obj/ls.o: ./list_dir/ls.c ./list_dir/ls.h
+	gcc -c ./list_dir/ls.c -o ./obj/ls.o -g
+
+./obj/history.o: ./history/history.c ./history/history.h
+	gcc -c ./history/history.c -o ./obj/history.o -g
 
 
-shell: ./obj/errors.o ./obj/prompt.o ./obj/print_wd.o ./obj/ech.o ./obj/cdir.o gvars.h shell.c
-	gcc ./obj/errors.o ./obj/prompt.o ./obj/print_wd.o ./obj/ech.o ./obj/cdir.o shell.c -o shell -g
+shell: ./obj/errors.o ./obj/prompt.o ./obj/print_wd.o ./obj/ech.o ./obj/cdir.o ./obj/ls.o ./obj/history.o gvars.h shell.c
+	gcc ./obj/errors.o ./obj/prompt.o ./obj/print_wd.o ./obj/ech.o ./obj/cdir.o ./obj/ls.o ./obj/history.o shell.c -o shell -g
 
 

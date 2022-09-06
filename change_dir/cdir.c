@@ -9,7 +9,7 @@ void setPrevDir()
 {
     if(prevDir==NULL)
     {
-        prevDir=(char*)malloc(1000);
+        prevDir=(char*)malloc(1024);
         if(prevDir==NULL)
         {
             errorR(1);
@@ -32,12 +32,15 @@ int cd()
     int ret=0;
 
     
-    char* relpath=(char*)malloc(1000);
+    char* relpath=(char*)malloc(1024);
     if(relpath==NULL)
         return errorR(1);
-    char* absolutePath=(char*)malloc(1000);
+    char* absolutePath=(char*)malloc(1024);
     if(absolutePath==NULL)
+    {
+        free(relpath);
         return errorR(1);
+    }
 
     
     char* arg=strtok(NULL," \t");
@@ -62,7 +65,7 @@ int cd()
     char* prevDir2=NULL;
     if(prevDir!=NULL)
     {
-        prevDir2=(char*)malloc(1000);
+        prevDir2=(char*)malloc(1024);
         if(prevDir2==NULL)
             return errorR(1);
         strcpy(prevDir2,prevDir);
