@@ -11,6 +11,10 @@
 #include "./list_dir/ls.h"
 #include "gvars.h"
 #include "./history/history.h"
+#include "./fgbg/fgbg.h"
+#include "./pinfo/pinfo.h"
+#include "./discover/discover.h"
+#include <signal.h>
 
 char* input;
 
@@ -32,27 +36,42 @@ int main()
     //setting color scheme for this shell(purple)
     printf("\033[1;35m");
 
+
     //allocating buffer for input shared across all commands(inter file var)
     input=(char*)malloc(4096);
     if(input==NULL)
         return errorR(1); 
 
     char** hq=createHq();
+    if(hq==NULL)
+        return -1;
     int commandcount=loadH(hq);
     
     char endtoken = '\n';  //used to signify when to print prompt
     char entireline[512]; //make it bigger
     entireline[0]='\0';
+
+
+    bgpidsInit();
+
     while (1)
     {
+        signal(SIGCLD,printTer);
+        printbgMsg();
         if (endtoken == '\n')
         {
             shPrompt();
+            printfgMsg();
         }
         //taking the first chunk of input(in case of ;)
-        if (scanf("%[^;\n]", input) == 0)
+        if (scanf("%[^&;\n]", input) == 0)
         {
             scanf("%c", &endtoken);
+            if(endtoken=='\n')
+            {
+                addcmd(&commandcount,hq,entireline);
+                entireline[0]='\0';
+            }
             continue;
         }
         scanf("%c", &endtoken);  //scans 
@@ -61,6 +80,8 @@ int main()
         strncat(entireline,input,strlen(input));
         if(endtoken==';')
             strcat(entireline,";");
+        if(endtoken=='&')
+            strcat(entireline,"&");
         if(endtoken=='\n')
         {
             addcmd(&commandcount,hq,entireline);
@@ -85,10 +106,21 @@ int main()
             lsg();
         else if(strcmp(command,"history")==0)
             printH(hq,commandcount);
+        else if(strcmp(command,"pinfo")==0)
+            printPinfo();
+        else if(strcmp(command,"discover")==0)
+            parseInp();
         else if (strcmp(command, "exit") == 0)
             break;
         else
-            printf("Command not found\n");
+        {
+            int bg=0;
+            if(endtoken=='&')
+            {
+                bg=1;
+            }
+            fgbgHandler(command,bg);
+        }
     }
     free(input);
     saveH(hq,commandcount);

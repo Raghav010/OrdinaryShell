@@ -8,16 +8,16 @@
 
 
 //dynamic memory allocation
-//natural sorting and not ascii sort
-//colourize outputs
-//make printing pretty(add newlines between multiple files and directories)
-//maybe switch to storing names instead of stats(important!!!!!!)
+//natural sorting and not ascii sort (done)
+//colourize outputs(done)
+//make printing pretty(add newlines between multiple files and directories)(done)
+//maybe switch to storing names instead of stats(important!!!!!!) ------ (todo)
 
 int cmp(const void* file1,const void* file2)
 {
     struct statN* file1ptr=*((struct statN**)file1);
     struct statN* file2ptr=*((struct statN**)file2);
-    int verdict=strcmp(file1ptr->name,file2ptr->name);
+    int verdict=strcasecmp(file1ptr->name,file2ptr->name);
     if(verdict>0)
         return 1;
     else if(verdict<0)
@@ -30,7 +30,7 @@ int cmpname(const void* file1,const void* file2)
 {
     char* file1ptr=*((char**)file1);
     char* file2ptr=*((char**)file2);
-    int verdict=strcmp(file1ptr,file2ptr);
+    int verdict=strcasecmp(file1ptr,file2ptr);
     if(verdict>0)
         return 1;
     else if(verdict<0)
@@ -85,6 +85,11 @@ void printPerms(mode_t modes)
 void printMtime(struct timespec timeM)
 {
     char* wordTime=ctime(&timeM.tv_sec);
+    if(wordTime==NULL)
+    {
+        errorR(1);
+        return;
+    }
     char* tok=strtok(wordTime," \t");
     for(int i=1;i<4;i++)
     {
@@ -111,23 +116,64 @@ void printMtime(struct timespec timeM)
 //prints the file in formatted form according to the -l flag (if -l flag isnt there space terminated)
 void printFilef(struct statN* file,int* flags)
 {
+    int ftype[2]={0,0}; //dir,executable
+    struct stat *fileStat = file->stats;
+    if (S_ISDIR(fileStat->st_mode))
+    {
+        ftype[0] = 1;
+    }
+    else
+    {
+        if (fileStat->st_mode & S_IXUSR)
+        {
+            ftype[1] = 1;
+        }
+    }
     if(flags[0])
     {
-        struct stat* fileStat=file->stats;
-        if(S_ISDIR(fileStat->st_mode))
+        if(ftype[0])
+        {
             printf("d");
+        }
         else
+        {
             printf("-");
+        }
         printPerms(fileStat->st_mode);
         printf(" ");
         printf("%3ld ",fileStat->st_nlink);
-        printf("%s ",getpwuid(fileStat->st_uid)->pw_name);
-        printf("%s ",getpwuid(fileStat->st_gid)->pw_name);
+        char* name=getpwuid(fileStat->st_uid)->pw_name;
+        if(name==NULL)
+        {
+            errorR(1);
+            return;
+        }
+        printf("%s ",name);
+        name=getpwuid(fileStat->st_gid)->pw_name;
+        if(name==NULL)
+        {
+            errorR(1);
+            return;
+        }
+        printf("%s ",name);
         printf("%7ld ",fileStat->st_size);
         printMtime(fileStat->st_mtim);
         printf(" ");
     }
+    if(ftype[0])
+    {
+        printf("\033[34;1m"); //blue for dirs
+    }
+    else if(ftype[1])
+    {
+        printf("\033[32;1m"); //green for execs
+    }
+    else
+    {   
+        printf("\033[37;1m"); //white for normal files
+    }
     printf("%s",file->name);
+    printf("\033[35;1m");
     if(flags[0])
         printf("\n");
     else
@@ -142,7 +188,7 @@ void printFiles(int* flags,struct statN** fileArr,int fileCount)
 {
     if(fileCount==0)
         return;
-    qsort(fileArr,fileCount,sizeof(struct statN*),cmp); //fix ascii sorting vs natural sorting
+    qsort(fileArr,fileCount,sizeof(struct statN*),cmp); 
     for(int i=0;i<fileCount;i++)
     {
         printFilef(fileArr[i],flags);
@@ -159,7 +205,17 @@ void printFiles(int* flags,struct statN** fileArr,int fileCount)
 void printDirContents(int* flags,char* dirName)
 {
     DIR* dh=opendir(dirName);
+    if(dh==NULL)
+    {
+        errorR(1);
+        return;
+    }
     char** fileNames=(char**)malloc(512*sizeof(char*)); //add support for more files
+    if(fileNames==NULL)
+    {
+        errorR(1);
+        return;
+    }
     int m=0;
     while(1)
     {
@@ -173,6 +229,11 @@ void printDirContents(int* flags,char* dirName)
             if(!flags[1] && bfilestat->d_name[0]=='.') //taking care of -a flag
                 continue;
             char* filename=(char*)malloc(256); //add dynamic memory allocation later
+            if(filename==NULL)
+            {
+                errorR(1);
+                return;
+            }
             strcpy(filename,bfilestat->d_name);
             fileNames[m]=filename;
         }
@@ -180,13 +241,48 @@ void printDirContents(int* flags,char* dirName)
     }
     closedir(dh);
     qsort(fileNames,m,sizeof(char*),cmpname);
+    if (flags[0])
+    {
+        // calcualting total block sizes
+        int totalBlocks = 0;
+        for (int i = 0; i < m; i++)
+        {
+            struct stat fstats;
+
+            char validPath[256];
+            validPath[0] = '\0';
+            strcat(validPath, dirName);
+            strcat(validPath, "/");
+            strcat(validPath, fileNames[i]);
+
+            if (stat(validPath, &fstats) == -1)
+            {
+                errorR(1);
+                return;
+            }
+            totalBlocks += fstats.st_blocks;
+        }
+        totalBlocks /= 2;
+        printf("total %d\n", totalBlocks);
+    }
     for(int i=0;i<m;i++)
     {
         struct statN filestat;
         struct stat  fstats;
         filestat.stats=&fstats;
         filestat.name=fileNames[i];
-        stat(fileNames[i],filestat.stats);
+
+        char validPath[256];
+        validPath[0]='\0';
+        strcat(validPath,dirName);
+        strcat(validPath,"/");
+        strcat(validPath,fileNames[i]);
+
+        if(stat(validPath,filestat.stats)==-1)
+        {
+            errorR(1);
+            return;
+        }
         printFilef(&filestat,flags);
         free(fileNames[i]);
     }
@@ -212,7 +308,11 @@ void printDir(int* flags,struct statN** dirArr,int dircount,int filecount)
     {
         char* dirname=dirArr[i]->name;
         if((dircount-1) || filecount)
+        {
+            printf("\033[37;1m"); //white
             printf("%s:\n",dirname);
+            printf("\033[35;1m"); //purple
+        }
         printDirContents(flags,dirname);
         if(!flags[0])  //newline after every directory entry without -l flag
             printf("\n");
@@ -292,7 +392,11 @@ int lsg()
 
             //categorizing the files as normal or dirctories
             struct statN* cStat=(struct statN*)malloc(sizeof(struct statN));
+            if(cStat==NULL)
+                return errorR(1);
             struct stat* arg=(struct stat*)malloc(sizeof(struct stat));
+            if(arg==NULL)
+                return errorR(1);
 
             if(stat(absolutePath,arg)==-1)
                 return errorR(1);

@@ -16,6 +16,11 @@ int max(int a,int b)
 char** createHq()
 {
     char** q=(char**)malloc(20*sizeof(char*));
+    if(q==NULL)
+    {
+        errorR(1);
+        return NULL;
+    }
     return q;
 }
 
@@ -51,6 +56,11 @@ void addcmd(int* commandcount,char** q,char* cmd)
     if(commandC==0)
     {
         char* ncmd=(char*)malloc(512);
+        if(ncmd==NULL)
+        {
+            errorR(1);
+            return;
+        }
         strcpy(ncmd,cmd);
         q[(commandC)]=ncmd;
         flag=0;   
@@ -68,6 +78,11 @@ void addcmd(int* commandcount,char** q,char* cmd)
         if(commandC!=0 && strcmp(q[commandC-1],cmd)!=0)
         {
             char* ncmd=(char*)malloc(512);
+            if(ncmd==NULL)
+            {
+                errorR(1);
+                return;
+            }
             strcpy(ncmd,cmd);
             q[(commandC)]=ncmd;
             flag=0;
@@ -83,6 +98,11 @@ void saveH(char** q,int commandcount)
     if(commandcount==0)
         return;
     FILE* fh=fopen(".history.txt","w");
+    if(fh==NULL)
+    {
+        errorR(1);
+        return;
+    }
     if(commandcount>20)
     {
         for(int i=0;i<20;i++)

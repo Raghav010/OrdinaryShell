@@ -25,8 +25,18 @@ all: shell
 ./obj/history.o: ./history/history.c ./history/history.h
 	gcc -c ./history/history.c -o ./obj/history.o -g
 
+./obj/fgbg.o: ./fgbg/fgbg.c ./fgbg/fgbg.h
+	gcc -c ./fgbg/fgbg.c -o ./obj/fgbg.o -g
 
-shell: ./obj/errors.o ./obj/prompt.o ./obj/print_wd.o ./obj/ech.o ./obj/cdir.o ./obj/ls.o ./obj/history.o gvars.h shell.c
-	gcc ./obj/errors.o ./obj/prompt.o ./obj/print_wd.o ./obj/ech.o ./obj/cdir.o ./obj/ls.o ./obj/history.o shell.c -o shell -g
+./obj/pinfo.o: ./pinfo/pinfo.c ./pinfo/pinfo.h
+	gcc -c ./pinfo/pinfo.c -o ./obj/pinfo.o -g
+
+
+./obj/discover.o: ./discover/discover.c ./discover/discover.h
+	gcc -c ./discover/discover.c -o ./obj/discover.o -g
+
+
+shell: ./obj/errors.o ./obj/prompt.o ./obj/print_wd.o ./obj/ech.o ./obj/cdir.o ./obj/ls.o ./obj/history.o ./obj/fgbg.o ./obj/pinfo.o ./obj/discover.o gvars.h shell.c
+	gcc ./obj/errors.o ./obj/prompt.o ./obj/print_wd.o ./obj/ech.o ./obj/cdir.o ./obj/ls.o ./obj/history.o ./obj/fgbg.o ./obj/pinfo.o ./obj/discover.o shell.c -o shell -g
 
 
