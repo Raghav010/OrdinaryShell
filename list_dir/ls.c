@@ -7,7 +7,7 @@
 //the functions should have access to the flag array(global??)
 
 
-//dynamic memory allocation
+//dynamic memory allocation ; or use data structures
 //natural sorting and not ascii sort (done)
 //colourize outputs(done)
 //make printing pretty(add newlines between multiple files and directories)(done)

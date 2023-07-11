@@ -11,15 +11,36 @@
 #include <errno.h>
 #include "../err/errors.h"
 
+
+struct bgps
+{
+    int bgpid;
+    char bgcmd[20];
+    int stopped; //whether the process is stopped
+    int jobnumber;
+};
+
+
+
 //signal handler
 void printTer(int signum);
 
 
 //initilaize all bgpids
-void bgpidsInit();
+void bgpsInit();
+
+//continues a stopped background process
+int bgContinue();
 
 
-void fgbgHandler(char* command,int bg);
+int sendSignal();
+
+int printJobs();
+
+
+int bringToFg();
+
+void fgbgHandler(char* command,int bg,int justWait);
 
 void printfgMsg();
 
